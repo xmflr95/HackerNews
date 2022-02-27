@@ -318,10 +318,14 @@ var Api = /*#__PURE__*/function () {
 
   _createClass(Api, [{
     key: "getRequest",
-    value: function getRequest() {
-      this.ajax.open('GET', this.url, false);
+    value: function getRequest(cb) {
+      var _this = this;
+
+      this.ajax.open('GET', this.url);
+      this.ajax.addEventListener('load', function () {
+        cb(JSON.parse(_this.ajax.response));
+      });
       this.ajax.send();
-      return JSON.parse(this.ajax.response);
     }
   }]);
 
@@ -343,8 +347,8 @@ var NewsFeedApi = /*#__PURE__*/function (_Api) {
 
   _createClass(NewsFeedApi, [{
     key: "getData",
-    value: function getData() {
-      return this.getRequest();
+    value: function getData(cb) {
+      return this.getRequest(cb);
     }
   }]);
 
@@ -366,8 +370,8 @@ var NewsDetailApi = /*#__PURE__*/function (_Api2) {
 
   _createClass(NewsDetailApi, [{
     key: "getData",
-    value: function getData() {
-      return this.getRequest();
+    value: function getData(cb) {
+      return this.getRequest(cb);
     }
   }]);
 
@@ -441,19 +445,23 @@ var NewsDetailView = /*#__PURE__*/function (_view_1$default) {
 
     _this.render = function (id) {
       var api = new api_1.NewsDetailApi(config_1.CONTENT_URL.replace('@id', id));
-      var newsDetail = api.getData();
+      api.getData(function (data) {
+        var title = data.title,
+            content = data.content,
+            comments = data.comments;
 
-      _this.store.makeRead(Number(id));
+        _this.store.makeRead(Number(id));
 
-      _this.setTemplateData('comments', _this.makeComment(newsDetail.comments));
+        _this.setTemplateData('comments', _this.makeComment(comments));
 
-      _this.setTemplateData('currentPage', _this.store.currentPage.toString());
+        _this.setTemplateData('title', title);
 
-      _this.setTemplateData('title', newsDetail.title);
+        _this.setTemplateData('content', content);
 
-      _this.setTemplateData('content', newsDetail.content);
+        _this.setTemplateData('currentPage', _this.store.currentPage.toString());
 
-      _this.updateView();
+        _this.updateView();
+      });
     };
 
     _this.store = store;
@@ -539,6 +547,18 @@ var NewsFeedView = /*#__PURE__*/function (_view_1$default) {
       var page = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '1';
       _this.store.currentPage = _this.store.currentPage = Number(page);
 
+      if (!_this.store.hasFeeds) {
+        _this.api.getData(function (feeds) {
+          _this.store.setFeeds(feeds);
+
+          _this.renderView();
+        });
+      }
+
+      _this.renderView();
+    };
+
+    _this.renderView = function () {
       for (var i = (_this.store.currentPage - 1) * 10; i < _this.store.currentPage * 10; i++) {
         var _this$store$getFeed = _this.store.getFeed(i),
             id = _this$store$getFeed.id,
@@ -563,11 +583,6 @@ var NewsFeedView = /*#__PURE__*/function (_view_1$default) {
 
     _this.store = store;
     _this.api = new api_1.NewsFeedApi(config_1.NEWS_URL);
-
-    if (!_this.store.hasFeeds) {
-      _this.store.setFeeds(_this.api.getData());
-    }
-
     return _this;
   }
 
@@ -746,7 +761,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51944" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64330" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
