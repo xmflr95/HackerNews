@@ -1,20 +1,25 @@
 import { NewsFeed, NewsDetail } from '../types';
 
 export class Api {
-  ajax: XMLHttpRequest;
+  xhr: XMLHttpRequest;
   url: string;
 
   constructor(url: string) {
-    this.ajax = new XMLHttpRequest();
+    this.xhr = new XMLHttpRequest();
     this.url = url;
   }
 
-  getRequest<AjaxResponse>(cb: (data: AjaxResponse) => void): void {
-    this.ajax.open('GET', this.url);
-    this.ajax.addEventListener('load', () => {
-      cb(JSON.parse(this.ajax.response) as AjaxResponse);
+  getRequestWithXHR<AjaxResponse>(cb: (data: AjaxResponse) => void): void {
+    this.xhr.open('GET', this.url);
+    this.xhr.addEventListener('load', () => {
+      cb(JSON.parse(this.xhr.response) as AjaxResponse);
     });
-    this.ajax.send();
+    this.xhr.send();
+  }
+
+  async request<AjaxResponse>(): Promise<AjaxResponse> {
+    const response = await fetch(this.url);
+    return await response.json() as AjaxResponse;
   }
 }
 
@@ -23,8 +28,8 @@ export class NewsFeedApi extends Api {
     super(url);
   }
 
-  getData(cb: (data: NewsFeed[]) => void): void {
-    return this.getRequest<NewsFeed[]>(cb);
+  getData(): Promise<NewsFeed[]> {
+    return this.request<NewsFeed[]>();
   }
 }
 
@@ -33,7 +38,7 @@ export class NewsDetailApi extends Api {
     super(url);
   }
 
-  getData(cb: (data: NewsDetail) => void): void {
-    return this.getRequest<NewsDetail>(cb);
+  getData(): Promise<NewsDetail> {
+    return this.request<NewsDetail>();
   }
 }
